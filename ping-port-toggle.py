@@ -23,7 +23,7 @@ TOOL_NAME = "ping-port-toggle"
 # Required env vars...
 MONITOR_IP=os.getenv("MONITOR_IP") # This is the IP to ping. If we don't have conectiity to this, we need to restart the switch port
 UDM_IP=os.getenv("UDM_IP")
-UDM_SWITCH_PORT=os.getenv("UDM_SWITCH_PORT")
+UDM_SWITCH_PORT=int(os.getenv("UDM_SWITCH_PORT"))
 UDM_USERNAME=os.getenv("UDM_USERNAME")
 UDM_PASSWORD=os.getenv("UDM_PASSWORD")
 UDM_ENABLED_PORT_CONF_ID=os.getenv("UDM_ENABLED_PORT_CONF_ID") #60d91905f99d8d06938cdce6
