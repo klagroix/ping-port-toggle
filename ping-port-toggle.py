@@ -145,6 +145,7 @@ def main():
     online = True
     port_enabled = True
     try:
+        logger.info("Monitoring {ip}...".format(ip=MONITOR_IP))
         while True:
             time.sleep(CHECK_INTERVAL_SEC)
             
