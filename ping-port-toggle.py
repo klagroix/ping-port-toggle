@@ -7,9 +7,10 @@ import time
 from loguru import logger
 from pprint import pprint
 from pyunifi.controller import Controller
+from prometheus_client import start_http_server, Counter
 
 # Setup logging
-DEBUG=False
+DEBUG=os.getenv("DEBUG", default='False').lower() in ('true', '1', 't')
 logging_level = "INFO"
 if DEBUG:
     logging_level = "DEBUG"
@@ -22,19 +23,20 @@ TOOL_NAME = "ping-port-toggle"
 # Required env vars...
 MONITOR_IP=os.getenv("MONITOR_IP") # This is the IP to ping. If we don't have conectiity to this, we need to restart the switch port
 UDM_IP=os.getenv("UDM_IP")
-UDM_USERNAME=os.getenv("UDM_USERNAME") #portdisabler
-UDM_PASSWORD=os.getenv("UDM_PASSWORD") #dMz28W8yPFZUj5
+UDM_SWITCH_PORT=os.getenv("UDM_SWITCH_PORT")
+UDM_USERNAME=os.getenv("UDM_USERNAME")
+UDM_PASSWORD=os.getenv("UDM_PASSWORD")
 UDM_ENABLED_PORT_CONF_ID=os.getenv("UDM_ENABLED_PORT_CONF_ID") #60d91905f99d8d06938cdce6
 UDM_DISABLED_PORT_CONF_ID=os.getenv("UDM_DISABLED_PORT_CONF_ID") #60d91905f99d8d06938cdce7
 
 # Optional env vars...
-UDM_SSL_VERIFY=False
-UDM_SWITCH_PORT=2
-CHECK_INTERVAL_SEC=5
-CHECK_ATTEMPTS=3 # (CHECK_INTERVAL_SEC * CHECK_ATTEMPTS) = how long we'll wait before deeming the device to be offline
-ENABLE_DELAY_SEC=2 # How long to wait between disabling the port and re-enalble
-BACKOFF_AFTER_TOGGLE_SEC=30 # How long to sleep after a toggle before checking for activity again
-SHOW_ACTIVITY=True # Whether to show if a device is online or offline between sleeps
+UDM_SSL_VERIFY=os.getenv("UDM_SSL_VERIFY", default='True').lower() in ('true', '1', 't')
+CHECK_INTERVAL_SEC=int(os.getenv("CHECK_INTERVAL_SEC", default=5))
+CHECK_ATTEMPTS=int(os.getenv("CHECK_INTERVAL_SEC", default=3)) # (CHECK_INTERVAL_SEC * CHECK_ATTEMPTS) = how long we'll wait before deeming the device to be offline
+ENABLE_DELAY_SEC=int(os.getenv("CHECK_INTERVAL_SEC", default=2)) # How long to wait between disabling the port and re-enalble
+BACKOFF_AFTER_TOGGLE_SEC=int(os.getenv("BACKOFF_AFTER_TOGGLE_SEC", default=30)) # How long to sleep after a toggle before checking for activity again
+SHOW_ACTIVITY=os.getenv("DEBUG", default='True').lower() in ('true', '1', 't') # Whether to show if a device is online or offline between sleeps
+PROMETHEUS_PORT=int(os.getenv("PROMETHEUS_PORT", default=9000)) # Port to listen on for Prometheus metrics
 
 # Verify args
 if MONITOR_IP is None:
@@ -42,6 +44,9 @@ if MONITOR_IP is None:
     sys.exit(1)
 if UDM_IP is None:
     logger.error("UDM_IP env var not found")
+    sys.exit(1)
+if UDM_SWITCH_PORT is None:
+    logger.error("UDM_SWITCH_PORT env var not found")
     sys.exit(1)
 if UDM_USERNAME is None:
     logger.error("UDM_USERNAME env var not found")
@@ -77,6 +82,16 @@ def ping(host):
     else:
         return False
 
+def init_udm_controller():
+    """Inits the UDM controller object
+
+    :returns: controller object
+    :rtype: Controller
+    """
+    c = Controller(UDM_IP, UDM_USERNAME, UDM_PASSWORD, version='UDMP-unifiOS', ssl_verify=UDM_SSL_VERIFY)
+    c.log = logger
+    return c
+
 def toggle_switch_port(enable):
     """Enables or disables a switch port on the UDM Pro
 
@@ -86,9 +101,7 @@ def toggle_switch_port(enable):
     :returns: None
     :rtype: None
     """
-    c = Controller(UDM_IP, UDM_USERNAME, UDM_PASSWORD, version='UDMP-unifiOS', ssl_verify=UDM_SSL_VERIFY)
-    c.log = logger
-
+    c = init_udm_controller()
 
     udm_mac = c.get_device_mac_by_ip(UDM_IP)
 
@@ -114,6 +127,18 @@ def toggle_switch_port(enable):
 
 def main():
     logger.info("Starting {tool_name}".format(tool_name=TOOL_NAME))
+
+    # Init the prometheus metrics
+    restart_counter = Counter('udm_port_restarts', 'Number of times the UDM Pro switch port has been disabled and re-enabled due to connectivity loss')
+    start_http_server(PROMETHEUS_PORT)
+
+    # Quick sanity test to confirm we can contact and login to the UDM
+    c = init_udm_controller()
+    udm_mac = c.get_device_mac_by_ip(UDM_IP)
+
+    logger.info("Found UDM Pro MAC address: {mac}".format(mac=udm_mac))
+
+
 
     # Ping continuously
     attempts = 0
@@ -155,6 +180,7 @@ def main():
                     toggle_switch_port(True)
 
                     logger.info("Toggle complete. Setting attempts back to 0 and entering wait time of {wait_sec}s before checking again".format(wait_sec=BACKOFF_AFTER_TOGGLE_SEC))
+                    restart_counter.inc()
                     online = True
                     attempts = 0
                     time.sleep(BACKOFF_AFTER_TOGGLE_SEC)
