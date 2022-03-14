@@ -35,7 +35,7 @@ CHECK_INTERVAL_SEC=int(os.getenv("CHECK_INTERVAL_SEC", default=5))
 CHECK_ATTEMPTS=int(os.getenv("CHECK_INTERVAL_SEC", default=3)) # (CHECK_INTERVAL_SEC * CHECK_ATTEMPTS) = how long we'll wait before deeming the device to be offline
 ENABLE_DELAY_SEC=int(os.getenv("CHECK_INTERVAL_SEC", default=2)) # How long to wait between disabling the port and re-enalble
 BACKOFF_AFTER_TOGGLE_SEC=int(os.getenv("BACKOFF_AFTER_TOGGLE_SEC", default=30)) # How long to sleep after a toggle before checking for activity again
-SHOW_ACTIVITY=os.getenv("DEBUG", default='True').lower() in ('true', '1', 't') # Whether to show if a device is online or offline between sleeps
+SHOW_ACTIVITY=os.getenv("SHOW_ACTIVITY", default='True').lower() in ('true', '1', 't') # Whether to show if a device is online or offline between sleeps
 PROMETHEUS_PORT=int(os.getenv("PROMETHEUS_PORT", default=9000)) # Port to listen on for Prometheus metrics
 
 # Verify args
