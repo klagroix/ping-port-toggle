@@ -1,0 +1,2 @@
+loguru~=0.6
+git+https://github.com/klagroix/pyunifi@master#egg=pyunifi # Fork to allow for enabling and disabling UDM Pro ports
