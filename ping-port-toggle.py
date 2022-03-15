@@ -26,8 +26,8 @@ UDM_IP=os.getenv("UDM_IP")
 UDM_SWITCH_PORT=int(os.getenv("UDM_SWITCH_PORT"))
 UDM_USERNAME=os.getenv("UDM_USERNAME")
 UDM_PASSWORD=os.getenv("UDM_PASSWORD")
-UDM_ENABLED_PORT_CONF_ID=os.getenv("UDM_ENABLED_PORT_CONF_ID") #60d91905f99d8d06938cdce6
-UDM_DISABLED_PORT_CONF_ID=os.getenv("UDM_DISABLED_PORT_CONF_ID") #60d91905f99d8d06938cdce7
+UDM_ENABLED_PORT_CONF_ID=os.getenv("UDM_ENABLED_PORT_CONF_ID")
+UDM_DISABLED_PORT_CONF_ID=os.getenv("UDM_DISABLED_PORT_CONF_ID")
 
 # Optional env vars...
 UDM_SSL_VERIFY=os.getenv("UDM_SSL_VERIFY", default='True').lower() in ('true', '1', 't')
@@ -110,9 +110,6 @@ def toggle_switch_port(enable):
         sys.exit(1)
 
     logger.info('Found UDM Pro with MAC {mac} and IP {ip}'.format(mac=udm_mac, ip=UDM_IP))
-
-    logger.debug("Switch port profile dump...")
-    logger.debug(c.dump_switch_port_profile(udm_mac, UDM_SWITCH_PORT))
 
     if enable:
         logger.info("Attempting to enable the port...")

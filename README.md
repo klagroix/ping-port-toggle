@@ -29,7 +29,13 @@ In order to toggle the switch port, we need a user on the UDM Pro that has permi
 
 ### Get the port profile configuration IDs for enabled and disabled ports
 
-TODO
+In order toggle the port between a disabled and enabled state, we need to know the port configuration ID that's used for each state. It's recommended you perform the following steps in a Python virtualenv.
+
+1. On a shell that supports python3, set the environment variables `UDM_IP`, `UDM_SWITCH_PORT`, `UDM_USERNAME`, and `UDM_PASSWORD`. Definitions for these are below.
+2. Run `pip install -r requirements.txt` to install the requirements
+3. With the desired `UDM_SWITCH_PORT` enabled, run `python3 utilities/get-port-configuration-id.py`. Note the ouput 'Port Configuration ID'. This will be used for the `UDM_ENABLED_PORT_CONF_ID` environment variable
+4. Disable the UDM switch port (in the Unifi console, find your UDM Pro, click Settings, click the port, select 'Disabled' as the port profile)
+5. Run `python3 utilities/get-port-configuration-id.py` again. Note the ouput 'Port Configuration ID'. This will be used for the `UDM_DISABLED_PORT_CONF_ID` environment variable
 
 ## Usage
 
@@ -44,7 +50,7 @@ docker run -d \
  -e UDM_PASSWORD=<UDM_PASSWORD> \
  -e UDM_ENABLED_PORT_CONF_ID=<UDM_ENABLED_PORT_CONF_ID> \
  -e UDM_DISABLED_PORT_CONF_ID=<UDM_DISABLED_PORT_CONF_ID> \
- REPO/ping-port-toggle
+ lagroix/ping-port-toggle
  ```
 
 ### Environment variables
@@ -74,7 +80,7 @@ Prometheus metrics are exposed to the `PROMETHEUS_PORT`. Metrics exposed are as 
 
 ##  Build
 
-TODO
+Build is automated through GitHub Actions upon a release being made. Simply create a release and wait for the actions to publish to Docker Hub: [lagroix/ping-port-toggle](https://hub.docker.com/repository/docker/lagroix/ping-port-toggle)
 
 To build this manually, run `docker build -t ping-port-toggle .`
 
