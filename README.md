@@ -3,6 +3,8 @@ Continuously pings a device on the network. When connectivity is lost to the dev
 
 *This has only been tested with the UDM Pro.*
 
+> **_NOTE:_** If you recently upgraded to the Unifi OS, you may need to reconfigure your port profiles. When I updated my OS version, `portconf_id` no longer existed in the API responses. I had to re-create my port profiles and re-assign them to the ports. I'm not sure if this is a bug or not, but it's worth noting. Profiles can be added here: https://IP/network/default/settings/profiles/ethernet-ports/form. After setting the profiles, follow the 'Get the port profile configuration IDs for enabled and disabled ports' section below
+
 ## Why?
 
 I have an aging system that EoL which keeping on life support. There's some issue with the NIC/Drivers/OS which causes network connectivity to stop working. The easiest fix I have is to just unplug the network cable and re-plug it back in to get it working again. This tool (`ping-port-toggle`) automates this.
